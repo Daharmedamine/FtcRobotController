@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.Range;
 
-@TeleOp(name = "OmniDrive + Shooter", group = "TeleOp")
+@TeleOp(name = "TeleOp ", group = "TeleOp")
 public class OmniDriveTeleOp extends OpMode {
 
     private DcMotor FRwheel, FLwheel, BRwheel, BLwheel;

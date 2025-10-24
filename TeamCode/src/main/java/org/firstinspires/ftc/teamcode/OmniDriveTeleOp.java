@@ -11,16 +11,19 @@ public class OmniDriveTeleOp extends OpMode {
 
     private DcMotor FRwheel, FLwheel, BRwheel, BLwheel;
     private DcMotor shooter1, shooter2;
+    private DcMotor IntakeMotor;
 
     private static final double DEADZONE = 0.06;
     private static final double TURN_SCALE = 0.9;
     private static final double SLOW_MODE_SCALE = 0.35;
 
     //  Shooter variables
-    private double shooterPower = 0.8;  //  Change this to tune shooter speed
+    private double shooterPower = 1.67;  // shooter speed
+    private double IntakePower = 1.67; // speed of the intake
     private boolean shooterOn = false;
+    private boolean IntakeOn = false;
     private boolean aPressedLast = false;
-
+    private boolean bPressedLast = false;
     @Override
     public void init() {
         FRwheel = hardwareMap.get(DcMotor.class, "FRwheel");
@@ -30,6 +33,7 @@ public class OmniDriveTeleOp extends OpMode {
 
         shooter1 = hardwareMap.get(DcMotor.class, "shooter_left"); // connected to Expansion Hub port 1
         shooter2 = hardwareMap.get(DcMotor.class, "shooter_right"); // connected to Expansion Hub port 3
+        IntakeMotor = hardwareMap.get(DcMotor.class, "intake") // connect it to Expansion Hub port 2
 
         shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
 
@@ -43,6 +47,7 @@ public class OmniDriveTeleOp extends OpMode {
 
         shooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        IntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
     }
 
@@ -71,6 +76,17 @@ public class OmniDriveTeleOp extends OpMode {
         FRwheel.setPower(fr * scale);
         BLwheel.setPower(bl * scale);
         BRwheel.setPower(br * scale);
+        // ===== Intake toggle =====
+        if (gamepad1.b && !bPressedLast) {
+            IntakeOn = !IntakeOn; // toggle shooter state
+        }
+        bPressedLast = gamepad1.b;
+
+        if (IntakeOn) {
+            IntakeMotor.setPower(shooterPower);
+        } else {
+            IntakeMotor.setPower(0);
+        }
 
         // ===== Shooter toggle =====
         if (gamepad1.a && !aPressedLast) {
@@ -86,12 +102,7 @@ public class OmniDriveTeleOp extends OpMode {
             shooter2.setPower(0);
         }
 
-        // ===== Telemetry =====
-        telemetry.addData("LX/LY/RX", "%.2f / %.2f / %.2f", lx, ly, rx);
-        telemetry.addData("FL/FR/BL/BR", "%.2f / %.2f / %.2f / %.2f", fl, fr, bl, br);
-        telemetry.addData("Shooter", shooterOn ? "ON" : "OFF");
-        telemetry.addData("Shooter Power", "%.2f", shooterPower);
-        telemetry.update();
+
     }
 
     private static double applyDeadzone(double v) {

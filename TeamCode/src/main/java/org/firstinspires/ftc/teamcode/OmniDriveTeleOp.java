@@ -33,7 +33,7 @@ public class OmniDriveTeleOp extends OpMode {
 
         shooter1 = hardwareMap.get(DcMotor.class, "shooter_left"); // connected to Expansion Hub port 1
         shooter2 = hardwareMap.get(DcMotor.class, "shooter_right"); // connected to Expansion Hub port 3
-        IntakeMotor = hardwareMap.get(DcMotor.class, "intake") // connect it to Expansion Hub port 2
+        IntakeMotor = hardwareMap.get(DcMotor.class, "intake"); // connect it to Expansion Hub port 2
 
         shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
 

@@ -17,25 +17,26 @@ public class OmniDriveTeleOp extends OpMode {
     private static final double TURN_SCALE = 0.9;
     private static final double SLOW_MODE_SCALE = 0.35;
 
-    //  Shooter variables
-    private double shooterPower = 1.67;  // shooter speed
-    private double IntakePower = 1.67; // speed of the intake
+    private double shooterPower = 1;
+    private double IntakePower = 1;
     private boolean shooterOn = false;
     private boolean IntakeOn = false;
     private boolean aPressedLast = false;
     private boolean bPressedLast = false;
+
     @Override
     public void init() {
         FRwheel = hardwareMap.get(DcMotor.class, "FRwheel");
-        FLwheel = hardwareMap.get(DcMotor.class, "FLwheel");
+        FLwheel = hardwareMap.get(DcMotor.class, "Flwheel");
         BRwheel = hardwareMap.get(DcMotor.class, "BRwheel");
         BLwheel = hardwareMap.get(DcMotor.class, "BLwheel");
 
-        shooter1 = hardwareMap.get(DcMotor.class, "shooter_left"); // connected to Expansion Hub port 1
-        shooter2 = hardwareMap.get(DcMotor.class, "shooter_right"); // connected to Expansion Hub port 3
-        IntakeMotor = hardwareMap.get(DcMotor.class, "intake"); // connect it to Expansion Hub port 2
+        shooter1 = hardwareMap.get(DcMotor.class, "shooter_left");
+        shooter2 = hardwareMap.get(DcMotor.class, "shooter_right");
+        IntakeMotor = hardwareMap.get(DcMotor.class, "intake");
 
         shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
+        IntakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         FLwheel.setDirection(DcMotorSimple.Direction.REVERSE);
         BLwheel.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -48,12 +49,10 @@ public class OmniDriveTeleOp extends OpMode {
         shooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         IntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
     }
 
     @Override
     public void loop() {
-        //  Movement control
         double lx = applyDeadzone(Math.pow(gamepad1.left_stick_x, 3));
         double ly = applyDeadzone(Math.pow(-gamepad1.left_stick_y, 3));
         double rx = applyDeadzone(Math.pow(gamepad1.right_stick_x, 3)) * TURN_SCALE;
@@ -76,33 +75,20 @@ public class OmniDriveTeleOp extends OpMode {
         FRwheel.setPower(fr * scale);
         BLwheel.setPower(bl * scale);
         BRwheel.setPower(br * scale);
-        // ===== Intake toggle =====
-        if (gamepad1.b && !bPressedLast) {
-            IntakeOn = !IntakeOn; // toggle shooter state
-        }
-        bPressedLast = gamepad1.b;
 
-        if (IntakeOn) {
-            IntakeMotor.setPower(shooterPower);
+        if (gamepad1.left_trigger > 0.1) {
+            IntakeMotor.setPower(IntakePower);
         } else {
             IntakeMotor.setPower(0);
         }
 
-        // ===== Shooter toggle =====
-        if (gamepad1.a && !aPressedLast) {
-            shooterOn = !shooterOn; // toggle shooter state
-        }
-        aPressedLast = gamepad1.a;
-
-        if (shooterOn) {
+        if (gamepad1.right_trigger > 0.1) {
             shooter1.setPower(shooterPower);
             shooter2.setPower(shooterPower);
         } else {
             shooter1.setPower(0);
             shooter2.setPower(0);
         }
-
-
     }
 
     private static double applyDeadzone(double v) {

@@ -12,6 +12,7 @@ public class OmniDriveTeleOp extends OpMode {
     private DcMotor FRwheel, FLwheel, BRwheel, BLwheel;
     private DcMotor shooter1, shooter2;
     private DcMotor IntakeMotor;
+    private DcMotor Index;
 
     private static final double DEADZONE = 0.06;
     private static final double TURN_SCALE = 0.9;
@@ -21,8 +22,12 @@ public class OmniDriveTeleOp extends OpMode {
     private double IntakePower = 1;
     private boolean shooterOn = false;
     private boolean IntakeOn = false;
+    private boolean shooterReverse = false;
+    private boolean intakeReverse = false;
     private boolean aPressedLast = false;
     private boolean bPressedLast = false;
+    private boolean xPressedLast = false;
+    private boolean yPressedLast = false;
 
     @Override
     public void init() {
@@ -34,6 +39,7 @@ public class OmniDriveTeleOp extends OpMode {
         shooter1 = hardwareMap.get(DcMotor.class, "shooter_left");
         shooter2 = hardwareMap.get(DcMotor.class, "shooter_right");
         IntakeMotor = hardwareMap.get(DcMotor.class, "intake");
+        Index = hardwareMap.get(DcMotor.class, "Index");
 
         shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
         IntakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -49,6 +55,7 @@ public class OmniDriveTeleOp extends OpMode {
         shooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         IntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        Index.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
     @Override
@@ -76,18 +83,47 @@ public class OmniDriveTeleOp extends OpMode {
         BLwheel.setPower(bl * scale);
         BRwheel.setPower(br * scale);
 
-        if (gamepad1.left_trigger > 0.1) {
-            IntakeMotor.setPower(IntakePower);
-        } else {
-            IntakeMotor.setPower(0);
+        if (gamepad2.b && !bPressedLast) {
+            shooterOn = !shooterOn;
         }
+        bPressedLast = gamepad2.b;
 
-        if (gamepad1.right_trigger > 0.1) {
-            shooter1.setPower(shooterPower);
-            shooter2.setPower(shooterPower);
+        if (gamepad2.x && !xPressedLast) {
+            IntakeOn = !IntakeOn;
+        }
+        xPressedLast = gamepad2.x;
+
+        if (gamepad1.a && !aPressedLast) {
+            shooterReverse = !shooterReverse;
+            intakeReverse = !intakeReverse;
+        }
+        aPressedLast = gamepad1.a;
+
+        if (gamepad1.y && !yPressedLast) {
+            intakeReverse = !intakeReverse;
+        }
+        yPressedLast = gamepad1.y;
+
+        boolean shooterActive = (gamepad2.right_trigger > 0.1) || shooterOn;
+        boolean intakeActive = (gamepad2.left_trigger > 0.1) || IntakeOn;
+
+        double shooterDir = shooterReverse ? -1 : 1;
+        double intakeDir = intakeReverse ? -1 : 1;
+
+        if (shooterActive) {
+            shooter1.setPower(shooterPower * shooterDir);
+            shooter2.setPower(shooterPower * shooterDir);
+            Index.setPower(0.4 * shooterDir);
         } else {
             shooter1.setPower(0);
             shooter2.setPower(0);
+            Index.setPower(0);
+        }
+
+        if (intakeActive) {
+            IntakeMotor.setPower(IntakePower * intakeDir);
+        } else {
+            IntakeMotor.setPower(0);
         }
     }
 

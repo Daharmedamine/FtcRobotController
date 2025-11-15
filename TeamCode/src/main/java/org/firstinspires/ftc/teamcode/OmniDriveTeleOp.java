@@ -99,10 +99,10 @@ public class OmniDriveTeleOp extends OpMode {
         }
         aPressedLast = gamepad1.a;
 
-        if (gamepad1.y && !yPressedLast) {
+        if (gamepad2.y && !yPressedLast) {
             intakeReverse = !intakeReverse;
         }
-        yPressedLast = gamepad1.y;
+        yPressedLast = gamepad2.y;
 
         boolean shooterActive = (gamepad2.right_trigger > 0.1) || shooterOn;
         boolean intakeActive = (gamepad2.left_trigger > 0.1) || IntakeOn;

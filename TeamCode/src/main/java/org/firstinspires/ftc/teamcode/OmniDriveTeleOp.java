@@ -11,16 +11,16 @@ public class OmniDriveTeleOp extends OpMode {
 
     private DcMotor FRwheel, FLwheel, BRwheel, BLwheel;
     private DcMotor shooter1, shooter2;
-    private DcMotor IntakeMotor;
-    private DcMotor Index;
+    private DcMotor intakeMotor;
+    private DcMotor index;
 
     private static final double DEADZONE = 0.06;
     private static final double TURN_SCALE = 0.9;
     private static final double SLOW_MODE_SCALE = 0.35;
 
     private double shooterPower = -1;
-    private double IntakePower = 1;
-    private double IndexPower = 0.4;
+    private double intakePower = 1;
+    private double indexPower = 0.4;
     private double stop = 0;
 
 
@@ -33,11 +33,11 @@ public class OmniDriveTeleOp extends OpMode {
 
         shooter1 = hardwareMap.get(DcMotor.class, "shooter_left");
         shooter2 = hardwareMap.get(DcMotor.class, "shooter_right");
-        IntakeMotor = hardwareMap.get(DcMotor.class, "intake");
-        Index = hardwareMap.get(DcMotor.class, "Index");
+        intakeMotor = hardwareMap.get(DcMotor.class, "intake");
+        index = hardwareMap.get(DcMotor.class, "Index");
 
         shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
-        IntakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         FRwheel.setDirection(DcMotorSimple.Direction.REVERSE);
         BRwheel.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -49,8 +49,8 @@ public class OmniDriveTeleOp extends OpMode {
 
         shooter1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        IntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        Index.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        index.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
     }
 
     @Override
@@ -71,12 +71,12 @@ public class OmniDriveTeleOp extends OpMode {
         bl /= max;
         br /= max;
 
-        double scale = gamepad1.right_bumper ? SLOW_MODE_SCALE : 1.0;
+       // double scale = gamepad1.right_bumper ? SLOW_MODE_SCALE : 1.0;
 
-        FLwheel.setPower(fl * scale);
-        FRwheel.setPower(fr * scale);
-        BLwheel.setPower(bl * scale);
-        BRwheel.setPower(br * scale);
+        FLwheel.setPower(fl);
+        FRwheel.setPower(fr);
+        BLwheel.setPower(bl);
+        BRwheel.setPower(br);
 
 
 
@@ -90,38 +90,38 @@ public class OmniDriveTeleOp extends OpMode {
 
 
         if (BallsOut) {
-            Index.setPower(IndexPower);
-            IntakeMotor.setPower(IntakePower);
+            index.setPower(indexPower);
+            intakeMotor.setPower(intakePower);
         }
         else {
-            Index.setPower(stop);
-            Index.setPower(stop);
+            index.setPower(stop);
+            index.setPower(stop);
         }
 
 
         if (shooterActive) {
             shooter1.setPower(shooterPower);
             shooter2.setPower(shooterPower);
-            Index.setPower(-IndexPower);
+            index.setPower(-indexPower);
         } else {
             shooter1.setPower(stop);
             shooter2.setPower(stop);
-            Index.setPower(stop);
+            index.setPower(stop);
         }
         if (IndexActive) {
-            Index.setPower(-IndexPower);
+            index.setPower(-indexPower);
 
         }
         else {
-            Index.setPower(stop);
+            index.setPower(stop);
         }
 
         if (intakeActive) {
-            IntakeMotor.setPower(-IntakePower);
-            Index.setPower(-IndexPower);
+            intakeMotor.setPower(-intakePower);
+            index.setPower(-indexPower);
         } else {
-            IntakeMotor.setPower(stop);
-            Index.setPower(stop);
+            intakeMotor.setPower(stop);
+            index.setPower(stop);
         }
     }
 

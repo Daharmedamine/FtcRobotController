@@ -18,7 +18,7 @@ public class OmniDriveTeleOp extends OpMode {
     private static final double TURN_SCALE = 0.9;
     private static final double SLOW_MODE_SCALE = 0.35;
 
-    private double shooterPower = 1;
+    private double shooterPower = -1;
     private double IntakePower = 1;
     private double IndexPower = 0.4;
     private double stop = 0;
@@ -40,7 +40,7 @@ public class OmniDriveTeleOp extends OpMode {
         IntakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         FRwheel.setDirection(DcMotorSimple.Direction.REVERSE);
-        BLwheel.setDirection(DcMotorSimple.Direction.REVERSE);
+        BRwheel.setDirection(DcMotorSimple.Direction.REVERSE);
 
         FRwheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         FLwheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -80,18 +80,18 @@ public class OmniDriveTeleOp extends OpMode {
 
 
 
-        boolean shooterActive = (gamepad2.right_bumper) ;
-        boolean intakeActive = (gamepad2.left_bumper) ;
-        boolean IndexActive = (gamepad2.right_trigger > 0.1 ) ;
-        boolean BallsOut = (gamepad2.left_trigger > 0.1);
+        boolean shooterActive = (gamepad2.right_trigger > 0.1) ;
+        boolean intakeActive = (gamepad2.left_trigger > 0.1) ;
+        boolean IndexActive = (gamepad2.right_bumper ) ;
+        boolean BallsOut = (gamepad2.left_bumper);
         boolean Reverse = (gamepad1.a);
 
 
 
 
         if (BallsOut) {
-            Index.setPower(-IndexPower);
-            IntakeMotor.setPower(-IntakePower);
+            Index.setPower(IndexPower);
+            IntakeMotor.setPower(IntakePower);
         }
         else {
             Index.setPower(stop);
@@ -102,14 +102,14 @@ public class OmniDriveTeleOp extends OpMode {
         if (shooterActive) {
             shooter1.setPower(shooterPower);
             shooter2.setPower(shooterPower);
-            Index.setPower(IndexPower);
+            Index.setPower(-IndexPower);
         } else {
             shooter1.setPower(stop);
             shooter2.setPower(stop);
             Index.setPower(stop);
         }
         if (IndexActive) {
-            Index.setPower(IndexPower);
+            Index.setPower(-IndexPower);
 
         }
         else {
@@ -117,7 +117,7 @@ public class OmniDriveTeleOp extends OpMode {
         }
 
         if (intakeActive) {
-            IntakeMotor.setPower(IntakePower);
+            IntakeMotor.setPower(-IntakePower);
         } else {
             IntakeMotor.setPower(stop);
         }

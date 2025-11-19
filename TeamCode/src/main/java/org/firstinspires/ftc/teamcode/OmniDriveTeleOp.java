@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 @TeleOp(name = "TeleOp ", group = "TeleOp")
 public class OmniDriveTeleOp extends OpMode {
@@ -18,7 +19,20 @@ public class OmniDriveTeleOp extends OpMode {
     private static final double DEADZONE = 0.06;
     private static final double TURN_SCALE = 0.9;
 
-    private double shooterPower = -0.67;
+    // Shooter PID constants (start with these and tune)
+    private double kP = 0.0004;
+    private double kI = 0.0000;
+    private double kD = 0.0000;
+
+    // Target shooter speed in ticks per second (tune this!)
+    private double shooterTargetTPS = 2000.0;
+
+    // Shooter PID state
+    private int lastShooterPos = 0;
+    private double lastTime = 0;
+    private double shooterIntegral = 0;
+    private double lastError = 0;
+
     private double IntakePower = 1;
     private double IndexPower = 0.4;
     private double stop = 0;
@@ -26,7 +40,7 @@ public class OmniDriveTeleOp extends OpMode {
     private boolean reverseControls = false;
     private boolean lastAState = false;
     private double ServoPosition1 = 0;
-    private double Servoposition2 = 180;
+    private double Servoposition2 = 0.5;
 
     @Override
     public void init() {
@@ -35,7 +49,6 @@ public class OmniDriveTeleOp extends OpMode {
         BRwheel = hardwareMap.get(DcMotor.class, "BRwheel");
         BLwheel = hardwareMap.get(DcMotor.class, "BLwheel");
         Servo = hardwareMap.get(Servo.class, "Servo1");
-
 
         shooter1 = hardwareMap.get(DcMotor.class, "shooter_left");
         shooter2 = hardwareMap.get(DcMotor.class, "shooter_right");
@@ -57,10 +70,20 @@ public class OmniDriveTeleOp extends OpMode {
         shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         IntakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         Index.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
+        // Enable encoders for shooter PID
+        shooter1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooter2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        shooter1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        shooter2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        lastShooterPos = shooter1.getCurrentPosition();
+        lastTime = getRuntime();
     }
 
     @Override
     public void loop() {
+        // ========== DRIVE CONTROLS ==========
         boolean currentAState = gamepad1.a;
         if (currentAState && !lastAState) {
             reverseControls = !reverseControls;
@@ -89,72 +112,109 @@ public class OmniDriveTeleOp extends OpMode {
         bl /= max;
         br /= max;
 
-
         FLwheel.setPower(fl);
         FRwheel.setPower(fr);
         BLwheel.setPower(bl);
         BRwheel.setPower(br);
 
-
-
-        boolean shooterActive = (gamepad2.right_trigger > 0.1) ;
-        boolean intakeActive = (gamepad2.left_trigger > 0.1) ;
-        boolean IndexActive = (gamepad2.right_bumper ) ;
+        // ========== GAMEPAD LOGIC ==========
+        boolean shooterActive = (gamepad2.right_trigger > 0.1);
+        boolean intakeActive = (gamepad2.left_trigger > 0.1);
+        boolean IndexActive = (gamepad2.right_bumper);
         boolean BallsOut = (gamepad2.left_bumper);
-        boolean Reverse = (gamepad1.a);
         boolean ServoActive = (gamepad1.right_trigger > 0.1);
 
+        // Optional: adjust shooter target speed with dpad
+        if (gamepad2.dpad_up) {
+            shooterTargetTPS += 100; // increase target speed
+        } else if (gamepad2.dpad_down) {
+            shooterTargetTPS -= 100; // decrease target speed
+        }
+        shooterTargetTPS = Range.clip(shooterTargetTPS, 0, 5000); // clamp reasonable range
 
-
-
-
+        // ========== BALLS OUT (REVERSE ALL FEED) ==========
         if (BallsOut) {
             Index.setPower(IndexPower);
             IntakeMotor.setPower(IntakePower);
-        }
-        else {
+        } else {
             Index.setPower(stop);
-            Index.setPower(stop);
+            IntakeMotor.setPower(stop);
         }
 
+        // ========== SERVO ==========
         if (ServoActive) {
-
             Servo.setPosition(Servoposition2);
-
-        }
-        else {
+        } else {
             Servo.setPosition(ServoPosition1);
         }
 
+        // ========== SHOOTER PID CONTROL ==========
+        // Measure shooter speed
+        int currentPos = shooter1.getCurrentPosition();
+        double currentTime = getRuntime();
+        double dt = currentTime - lastTime;
+        double shooterTPS = 0;
+
+        if (dt > 0) {
+            shooterTPS = (currentPos - lastShooterPos) / dt; // ticks per second
+        }
 
         if (shooterActive) {
+            // PID on absolute speed so direction sign doesn't matter
+            double currentSpeed = Math.abs(shooterTPS);
+            double error = shooterTargetTPS - currentSpeed;
+
+            shooterIntegral += error * dt;
+            double derivative = (dt > 0) ? (error - lastError) / dt : 0;
+
+            double output = kP * error + kI * shooterIntegral + kD * derivative;
+
+            // Shooter power command (negative because you used -0.67 before)
+            double shooterPower = -Range.clip(output, 0, 1);
+
             shooter1.setPower(shooterPower);
             shooter2.setPower(shooterPower);
+
+            // While shooter is active, you previously fed Index backwards
             Index.setPower(-IndexPower);
+
+            lastError = error;
         } else {
-            shooter1.setPower(stop);
-            shooter2.setPower(stop);
-            Index.setPower(stop);
+            // Shooter off, reset PID state
+            shooter1.setPower(0);
+            shooter2.setPower(0);
+            shooterIntegral = 0;
+            lastError = 0;
         }
+
+        // Update last encoder/time for next loop
+        lastShooterPos = currentPos;
+        lastTime = currentTime;
+
+        // ========== INDEX MANUAL FEED ==========
         if (IndexActive) {
             Index.setPower(-IndexPower);
-
-        }
-        else {
+        } else if (!shooterActive && !BallsOut && !intakeActive) {
+            // Only stop here if nothing else is trying to move Index
             Index.setPower(stop);
         }
 
+        // ========== INTAKE ==========
         if (intakeActive) {
             IntakeMotor.setPower(-IntakePower);
             Index.setPower(-IndexPower);
-        } else {
+        } else if (!BallsOut) {
             IntakeMotor.setPower(stop);
-            Index.setPower(stop);
         }
+
+        // (Optional) telemetry to help tune PID
+        telemetry.addData("Shooter TPS", shooterTPS);
+        telemetry.addData("Target TPS", shooterTargetTPS);
+        telemetry.addData("ShooterActive", shooterActive);
+        telemetry.update();
     }
 
     private static double applyDeadzone(double v) {
         return (Math.abs(v) < DEADZONE) ? 0.0 : v;
     }
 }
-

@@ -20,19 +20,16 @@ public class OmniDriveTeleOp extends OpMode {
 
     private double shooterPower = 1;
     private double IntakePower = 1;
-    private boolean shooterOn = false;
-    private boolean IntakeOn = false;
-    private boolean shooterReverse = false;
-    private boolean intakeReverse = false;
-    private boolean aPressedLast = false;
-    private boolean bPressedLast = false;
-    private boolean xPressedLast = false;
-    private boolean yPressedLast = false;
+    private double IndexPower = 0.4;
+    private double stop = 0;
+
+    private boolean reverseDrive = false;
+    private boolean lastReverseButton = false;
 
     @Override
     public void init() {
         FRwheel = hardwareMap.get(DcMotor.class, "FRwheel");
-        FLwheel = hardwareMap.get(DcMotor.class, "Flwheel");
+        FLwheel = hardwareMap.get(DcMotor.class, "FLwheel");
         BRwheel = hardwareMap.get(DcMotor.class, "BRwheel");
         BLwheel = hardwareMap.get(DcMotor.class, "BLwheel");
 
@@ -44,7 +41,7 @@ public class OmniDriveTeleOp extends OpMode {
         shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
         IntakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        FLwheel.setDirection(DcMotorSimple.Direction.REVERSE);
+        FRwheel.setDirection(DcMotorSimple.Direction.REVERSE);
         BLwheel.setDirection(DcMotorSimple.Direction.REVERSE);
 
         FRwheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -63,6 +60,11 @@ public class OmniDriveTeleOp extends OpMode {
         double lx = applyDeadzone(Math.pow(gamepad1.left_stick_x, 3));
         double ly = applyDeadzone(Math.pow(-gamepad1.left_stick_y, 3));
         double rx = applyDeadzone(Math.pow(gamepad1.right_stick_x, 3)) * TURN_SCALE;
+
+        if (reverseDrive) {
+            lx = -lx;
+            ly = -ly;
+        }
 
         double fl = ly + lx + rx;
         double fr = ly - lx - rx;
@@ -83,47 +85,46 @@ public class OmniDriveTeleOp extends OpMode {
         BLwheel.setPower(bl * scale);
         BRwheel.setPower(br * scale);
 
-        if (gamepad2.b && !bPressedLast) {
-            shooterOn = !shooterOn;
+        boolean shooterActive = (gamepad2.right_trigger > 0.1);
+        boolean intakeActive = (gamepad2.left_trigger > 0.1);
+        boolean IndexActive = (gamepad2.right_bumper);
+        boolean BallsOut = (gamepad2.left_bumper);
+        boolean Reverse = (gamepad1.a);
+
+        if (Reverse && !lastReverseButton) {
+            reverseDrive = !reverseDrive;
         }
-        bPressedLast = gamepad2.b;
+        lastReverseButton = Reverse;
 
-        if (gamepad2.x && !xPressedLast) {
-            IntakeOn = !IntakeOn;
+        if (BallsOut) {
+            Index.setPower(-IndexPower);
+            IntakeMotor.setPower(-IntakePower);
         }
-        xPressedLast = gamepad2.x;
-
-        if (gamepad1.a && !aPressedLast) {
-            shooterReverse = !shooterReverse;
-            intakeReverse = !intakeReverse;
+        else {
+            Index.setPower(stop);
+            Index.setPower(stop);
         }
-        aPressedLast = gamepad1.a;
-
-        if (gamepad2.y && !yPressedLast) {
-            intakeReverse = !intakeReverse;
-        }
-        yPressedLast = gamepad2.y;
-
-        boolean shooterActive = (gamepad2.right_trigger > 0.1) || shooterOn;
-        boolean intakeActive = (gamepad2.left_trigger > 0.1) || IntakeOn;
-
-        double shooterDir = shooterReverse ? -1 : 1;
-        double intakeDir = intakeReverse ? -1 : 1;
 
         if (shooterActive) {
-            shooter1.setPower(shooterPower * shooterDir);
-            shooter2.setPower(shooterPower * shooterDir);
-            Index.setPower(0.4 * shooterDir);
+            shooter1.setPower(shooterPower);
+            shooter2.setPower(shooterPower);
+            Index.setPower(IndexPower);
         } else {
-            shooter1.setPower(0);
-            shooter2.setPower(0);
-            Index.setPower(0);
+            shooter1.setPower(stop);
+            shooter2.setPower(stop);
+            Index.setPower(stop);
+        }
+        if (IndexActive) {
+            Index.setPower(-0.4);
+        }
+        else {
+            Index.setPower(stop);
         }
 
         if (intakeActive) {
-            IntakeMotor.setPower(IntakePower * intakeDir);
+            IntakeMotor.setPower(IntakePower);
         } else {
-            IntakeMotor.setPower(0);
+            IntakeMotor.setPower(stop);
         }
     }
 

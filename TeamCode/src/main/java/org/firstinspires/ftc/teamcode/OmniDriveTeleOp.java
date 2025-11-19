@@ -23,8 +23,6 @@ public class OmniDriveTeleOp extends OpMode {
     private double IndexPower = 0.4;
     private double stop = 0;
 
-    private boolean reverseDrive = false;
-    private boolean lastReverseButton = false;
 
     @Override
     public void init() {
@@ -61,11 +59,6 @@ public class OmniDriveTeleOp extends OpMode {
         double ly = applyDeadzone(Math.pow(-gamepad1.left_stick_y, 3));
         double rx = applyDeadzone(Math.pow(gamepad1.right_stick_x, 3)) * TURN_SCALE;
 
-        if (reverseDrive) {
-            lx = -lx;
-            ly = -ly;
-        }
-
         double fl = ly + lx + rx;
         double fr = ly - lx - rx;
         double bl = ly - lx + rx;
@@ -85,16 +78,16 @@ public class OmniDriveTeleOp extends OpMode {
         BLwheel.setPower(bl * scale);
         BRwheel.setPower(br * scale);
 
-        boolean shooterActive = (gamepad2.right_trigger > 0.1);
-        boolean intakeActive = (gamepad2.left_trigger > 0.1);
-        boolean IndexActive = (gamepad2.right_bumper);
-        boolean BallsOut = (gamepad2.left_bumper);
+
+
+        boolean shooterActive = (gamepad2.right_bumper) ;
+        boolean intakeActive = (gamepad2.left_bumper) ;
+        boolean IndexActive = (gamepad2.right_trigger > 0.1 ) ;
+        boolean BallsOut = (gamepad2.left_trigger > 0.1);
         boolean Reverse = (gamepad1.a);
 
-        if (Reverse && !lastReverseButton) {
-            reverseDrive = !reverseDrive;
-        }
-        lastReverseButton = Reverse;
+
+
 
         if (BallsOut) {
             Index.setPower(-IndexPower);
@@ -104,6 +97,7 @@ public class OmniDriveTeleOp extends OpMode {
             Index.setPower(stop);
             Index.setPower(stop);
         }
+
 
         if (shooterActive) {
             shooter1.setPower(shooterPower);
@@ -115,7 +109,8 @@ public class OmniDriveTeleOp extends OpMode {
             Index.setPower(stop);
         }
         if (IndexActive) {
-            Index.setPower(-0.4);
+            Index.setPower(IndexPower);
+
         }
         else {
             Index.setPower(stop);

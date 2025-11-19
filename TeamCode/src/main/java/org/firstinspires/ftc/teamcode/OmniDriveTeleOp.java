@@ -118,8 +118,10 @@ public class OmniDriveTeleOp extends OpMode {
 
         if (intakeActive) {
             IntakeMotor.setPower(-IntakePower);
+            Index.setPower(-IndexPower);
         } else {
             IntakeMotor.setPower(stop);
+            Index.setPower(stop);
         }
     }
 

@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "TeleOp ", group = "TeleOp")
 public class OmniDriveTeleOp extends OpMode {
@@ -13,16 +13,20 @@ public class OmniDriveTeleOp extends OpMode {
     private DcMotor shooter1, shooter2;
     private DcMotor IntakeMotor;
     private DcMotor Index;
+    private Servo Servo;
 
     private static final double DEADZONE = 0.06;
     private static final double TURN_SCALE = 0.9;
-    private static final double SLOW_MODE_SCALE = 0.35;
 
-    private double shooterPower = -1;
+    private double shooterPower = -0.67;
     private double IntakePower = 1;
     private double IndexPower = 0.4;
     private double stop = 0;
 
+    private boolean reverseControls = false;
+    private boolean lastAState = false;
+    private double ServoPosition1 = 0;
+    private double Servoposition2 = 180;
 
     @Override
     public void init() {
@@ -30,6 +34,8 @@ public class OmniDriveTeleOp extends OpMode {
         FLwheel = hardwareMap.get(DcMotor.class, "FLwheel");
         BRwheel = hardwareMap.get(DcMotor.class, "BRwheel");
         BLwheel = hardwareMap.get(DcMotor.class, "BLwheel");
+        Servo = hardwareMap.get(Servo.class, "Servo1");
+
 
         shooter1 = hardwareMap.get(DcMotor.class, "shooter_left");
         shooter2 = hardwareMap.get(DcMotor.class, "shooter_right");
@@ -55,9 +61,21 @@ public class OmniDriveTeleOp extends OpMode {
 
     @Override
     public void loop() {
+        boolean currentAState = gamepad1.a;
+        if (currentAState && !lastAState) {
+            reverseControls = !reverseControls;
+        }
+        lastAState = currentAState;
+
         double lx = applyDeadzone(Math.pow(gamepad1.left_stick_x, 3));
         double ly = applyDeadzone(Math.pow(-gamepad1.left_stick_y, 3));
         double rx = applyDeadzone(Math.pow(gamepad1.right_stick_x, 3)) * TURN_SCALE;
+
+        if (reverseControls) {
+            lx = -lx;
+            ly = -ly;
+            rx = -rx;
+        }
 
         double fl = ly + lx + rx;
         double fr = ly - lx - rx;
@@ -71,12 +89,11 @@ public class OmniDriveTeleOp extends OpMode {
         bl /= max;
         br /= max;
 
-        double scale = gamepad1.right_bumper ? SLOW_MODE_SCALE : 1.0;
 
-        FLwheel.setPower(fl * scale);
-        FRwheel.setPower(fr * scale);
-        BLwheel.setPower(bl * scale);
-        BRwheel.setPower(br * scale);
+        FLwheel.setPower(fl);
+        FRwheel.setPower(fr);
+        BLwheel.setPower(bl);
+        BRwheel.setPower(br);
 
 
 
@@ -85,6 +102,8 @@ public class OmniDriveTeleOp extends OpMode {
         boolean IndexActive = (gamepad2.right_bumper ) ;
         boolean BallsOut = (gamepad2.left_bumper);
         boolean Reverse = (gamepad1.a);
+        boolean ServoActive = (gamepad1.right_trigger > 0.1);
+
 
 
 
@@ -96,6 +115,15 @@ public class OmniDriveTeleOp extends OpMode {
         else {
             Index.setPower(stop);
             Index.setPower(stop);
+        }
+
+        if (ServoActive) {
+
+            Servo.setPosition(Servoposition2);
+
+        }
+        else {
+            Servo.setPosition(ServoPosition1);
         }
 
 
@@ -129,3 +157,4 @@ public class OmniDriveTeleOp extends OpMode {
         return (Math.abs(v) < DEADZONE) ? 0.0 : v;
     }
 }
+
